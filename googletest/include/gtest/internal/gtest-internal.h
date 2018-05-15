@@ -1189,17 +1189,24 @@ class NativeArray {
 
 #define GTEST_TEST_NO_THROW_(statement, fail) \
   GTEST_AMBIGUOUS_ELSE_BLOCKER_ \
-  if (::testing::internal::AlwaysTrue()) { \
+  std::string GTEST_CONCAT_TOKEN_(gtest_exmsg_testnothrow_, __LINE__); \
+  if (::testing::internal::AlwaysFalse()) { \
     try { \
       GTEST_SUPPRESS_UNREACHABLE_CODE_WARNING_BELOW_(statement); \
     } \
+    catch (const std::exception& exception) \
+    { \
+      GTEST_CONCAT_TOKEN_(gtest_exmsg_testnothrow_,__LINE__) = exception.what(); \
+      goto GTEST_CONCAT_TOKEN_(gtest_label_testnothrow_, __LINE__); \
+    } \
     catch (...) { \
+      GTEST_CONCAT_TOKEN_(gtest_exmsg_testnothrow_,__LINE__) = "Unknown - no std::exception"; \
       goto GTEST_CONCAT_TOKEN_(gtest_label_testnothrow_, __LINE__); \
     } \
   } else \
     GTEST_CONCAT_TOKEN_(gtest_label_testnothrow_, __LINE__): \
-      fail("Expected: " #statement " doesn't throw an exception.\n" \
-           "  Actual: it throws.")
+      fail(("Expected: " #statement " doesn't throw an exception.\n" \
+            "  Actual: it throws: " + GTEST_CONCAT_TOKEN_(gtest_exmsg_testnothrow_,__LINE__)).c_str())
 
 #define GTEST_TEST_ANY_THROW_(statement, fail) \
   GTEST_AMBIGUOUS_ELSE_BLOCKER_ \
